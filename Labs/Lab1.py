@@ -34,7 +34,11 @@ try:
         placeholder="Can you give me a short summary?",
         disabled=not uploaded_file,
     )
-  if uploaded_file and question:
+except Exception:
+    st.error("Invalid API key. Please check and try again.")
+    st.stop()
+
+if uploaded_file and question:
 
         # Process the uploaded file and question.
         document = uploaded_file.read().decode()
@@ -45,10 +49,6 @@ try:
             }
         ]
 
-except Exception:
-    st.error("Invalid API key. Please check and try again.")
-    st.stop()
-
 
         # Generate an answer using the OpenAI API.
         stream = client.chat.completions.create(
@@ -58,5 +58,5 @@ except Exception:
         )
 
         # Stream the response to the app using `st.write_stream`.
-        st.write_stream(stream))
+        st.write_stream(stream)
     
