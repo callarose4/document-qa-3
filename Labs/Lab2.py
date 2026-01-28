@@ -47,5 +47,11 @@ if uploaded_file and question:
             stream=True,
         )
 
+        def stream_text ():
+            for event in stream:
+                  delta = event.choices[0].delta.content
+                  if delta: 
+                        yield delta
+
         # Stream the response to the app using `st.write_stream`.
-st.write_stream(stream)
+st.write_stream(stream_text())
