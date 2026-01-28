@@ -6,6 +6,12 @@ st.title("Lab 2")
 st.write(
     "Upload a document below and ask a question about it – GPT will answer! "
 )
+summary_type = st.sidebar.radio(
+    "Summary type",
+    ["100 words", "2 connected paragraphs", "5 bullet points"]
+)
+use_advanced = st.sidebar.checkbox("Use advanced model")
+model= "gpt-4" if use_advanced else "gpt-4.1-nano"
 
 # Ask user for their OpenAI API key via `st.text_input`.
 # Alternatively, you can store the API key in `./.streamlit/secrets.toml` and access it
@@ -23,20 +29,27 @@ uploaded_file = st.file_uploader(
 
     # Ask the user for a question via `st.text_area`.
 question = st.text_area(
-        "Now ask a question about the document!",
-        placeholder="Can you give me a short summary?",
-        disabled=not uploaded_file,
+    placeholder="Can you give me a short summary?",
+    disabled=not uploaded_file,
     )
 
-if uploaded_file and question:
+if uploaded_file:
     document = uploaded_file.read().decode("utf-8", errors="ignore")
 
+    if summary_type == "100 words":
+        instruction = "Summarize the document in exactly 100 words."
+    elif summary_type == "2 connected paragraphs":
+        instruction = "Summarize the document in 2 connected paragraphs."
+    else: 
+        instruction = "Summarize the document in 5 concise bullet points."
+
     messages = [
-        {"role": "user", "content": f"Here's a document:\n\n{document}\n\n---\n\n{question}"}
+        {"role": "user", "content": f"{instruction}\n\nDocument:\n{document}"}
     ]
 
+
     stream = client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model=model,
         messages=messages,
         stream=True,
     )
@@ -48,4 +61,3 @@ if uploaded_file and question:
                 yield delta
 
     st.write_stream(stream_text(stream))
-
