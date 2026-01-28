@@ -54,4 +54,4 @@ if uploaded_file and question:
                         yield delta
 
         # Stream the response to the app using `st.write_stream`.
-st.write_stream(stream_text())
+st.write_stream(stream)
