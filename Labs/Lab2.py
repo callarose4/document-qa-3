@@ -15,7 +15,6 @@ openai_api_key = st.secrets.OPEN_API_KEY
 
 
 client = OpenAI(api_key=openai_api_key)
-st.success
 
     # Let the user upload a file via `st.file_uploader`.
 uploaded_file = st.file_uploader(
