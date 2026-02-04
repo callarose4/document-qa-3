@@ -1,6 +1,6 @@
 import streamlit as st
 from openai import OpenAI
-import fitz  # PyMuPDF
+import fitz # PyMuPDF
 
 st.title("Lab 2")
 st.write("Upload a PDF below and the app will summarize it.")
