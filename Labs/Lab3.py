@@ -40,7 +40,12 @@ if prompt := st.chat_input("Ask me anything!"):
     )
 
     with st.chat_message("assistant"):
-        response = st.write_stream(response)
+        response_box = st.empty()
+        for event in stream:
+            delta = event.choices[0].delta.content
+            if delta:
+                full_response += delta
+                response_box.markdown(full_response)
 
 st.session_state.messages.append({"role": "assistant", "content": response})    
 
