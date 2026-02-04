@@ -3,15 +3,15 @@ from openai import OpenAI
 import tiktoken
 
 def count_tokens(messages, model_name):
-    try: 
+    try:
         enc = tiktoken.encoding_for_model(model_name)
     except Exception:
         enc = tiktoken.get_encoding("cl100k_base")  # fallback encoding
-    
-    total = 0 
+
+    total = 0
     for m in messages:
         total += len(enc.encode(m.get("content", "")))
-        total += 4  # every message has a role and content, plus some overhead
+        total += 4  # message overhead (approx)
     return total
 
 def enforce_max_tokens(messages, model_name, max_tok):
@@ -27,22 +27,36 @@ def enforce_max_tokens(messages, model_name, max_tok):
     while rest and count_tokens(system + rest, model_name) > max_tok:
         rest.pop(0)
 
-    # Never return empty: at minimum return system, otherwise return a fallback user message
+    # Never return empty
     if system:
         return system + rest if (system + rest) else system
     return rest if rest else [{"role": "user", "content": "Hi"}]
 
+def last_two_user_turns(messages):
+    # FIX 1: correctly keep the first system message
+    system = [m for m in messages if m["role"] == "system"][:1]
 
-max_tokens = st.sidebar.number_input("Max tokens to send to the model", min_value=200, max_value=8000, value=1200, step=100)    
+    # FIX 2: actually return last two user turns (+ assistant messages after them)
+    user_idxs = [i for i, m in enumerate(messages) if m["role"] == "user"]
+    if len(user_idxs) <= 2:
+        return system + [m for m in messages if m["role"] != "system"]
+
+    start = user_idxs[-2]
+    tail = [m for m in messages[start:] if m["role"] != "system"]
+    return system + tail
+
+max_tokens = st.sidebar.number_input(
+    "Max tokens to send to the model",
+    min_value=200,
+    max_value=8000,
+    value=1200,
+    step=100
+)
 
 st.title("MY Lab 3 question answering chatbot")
 
 openAI_model = st.sidebar.selectbox("Which Model?", ["mini", "regular"])
-
-if openAI_model == "mini":
-    model_to_use = "gpt-4o-mini"
-else:
-    model_to_use = "gpt-4o"
+model_to_use = "gpt-4o-mini" if openAI_model == "mini" else "gpt-4o"
 
 # Create OpenAI client once
 if "client" not in st.session_state:
@@ -58,19 +72,9 @@ if "messages" not in st.session_state:
 # Display chat history
 for msg in st.session_state.messages:
     if msg["role"] == "system":
-        continue  # Don't display system messages   
+        continue
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
-
-def last_two_user_turns(messages):
-    # keep the first system message (if any)
-    system = [m for m in messages if m["role"] == "system"[:1]]
-    
-    # get the last two user turns
-    user_idxs = [i for i, m in enumerate(messages) if m["role"] == "user"]
-    if len (user_idxs) <= 2:
-        return system + [m for m in messages if m["role"] != "system"]
-    return system + system
 
 # User input
 prompt = st.chat_input("Ask me anything!")
@@ -81,17 +85,20 @@ if prompt:
         st.markdown(prompt)
 
     client = st.session_state.client
-    messages_to_send = last_two_user_turns(st.session_state.messages)  
-    messages_to_send = enforce_max_tokens(messages_to_send, model_to_use, max_tokens) 
+
+    messages_to_send = last_two_user_turns(st.session_state.messages)
+    messages_to_send = enforce_max_tokens(messages_to_send, model_to_use, max_tokens)
+
     st.sidebar.write("Messages sent:", len(messages_to_send))
+
+    tokens_sent = count_tokens(messages_to_send, model_to_use)
+    st.sidebar.write(f"Tokens sent this request: {tokens_sent}")
+
     stream = client.chat.completions.create(
         model=model_to_use,
         messages=messages_to_send,
         stream=True,
     )
-
-    tokens_sent = count_tokens(messages_to_send, model_to_use)
-    st.sidebar.write(f"Tokens sent this request: {tokens_sent}")
 
     full_response = ""
     with st.chat_message("assistant"):
@@ -103,3 +110,4 @@ if prompt:
                 response_box.markdown(full_response)
 
     st.session_state.messages.append({"role": "assistant", "content": full_response})
+
