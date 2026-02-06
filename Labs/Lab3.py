@@ -2,7 +2,6 @@ import streamlit as st
 from openai import OpenAI
 import tiktoken
 
-# ---------------- Part B helpers ----------------
 def count_tokens(messages, model_name):
     try:
         enc = tiktoken.encoding_for_model(model_name)
@@ -12,7 +11,7 @@ def count_tokens(messages, model_name):
     total = 0
     for m in messages:
         total += len(enc.encode(m.get("content", "")))
-        total += 4  # approx overhead per message
+        total += 4 
     return total
 
 def enforce_max_tokens(messages, model_name, max_tok):
@@ -41,7 +40,6 @@ def last_two_user_turns(messages):
     tail = [m for m in messages[start:] if m["role"] != "system"]
     return system + tail
 
-# ---------------- Part C helpers ----------------
 def yes_no_intent(text: str) -> str:
     t = text.strip().lower()
     if t in {"yes", "y", "yeah", "yep", "sure", "yea"}:
@@ -50,7 +48,7 @@ def yes_no_intent(text: str) -> str:
         return "no"
     return "other"
 
-# ---------------- One streaming function (removes redundancy) ----------------
+
 def stream_assistant_reply(client, model_to_use, messages_to_send):
     """Calls the model with streaming, renders output, returns full text."""
     stream = client.chat.completions.create(
@@ -69,13 +67,13 @@ def stream_assistant_reply(client, model_to_use, messages_to_send):
                 box.markdown(full_response)
     return full_response
 
-# ---------------- App ----------------
+
 st.title("MY Lab 3 question answering chatbot")
 
 openAI_model = st.sidebar.selectbox("Which Model?", ["mini", "regular"])
 model_to_use = "gpt-4o-mini" if openAI_model == "mini" else "gpt-4o"
 
-# keep max_tokens defined in the app (simpler than a slider)
+# keep max_tokens defined in the app 
 MAX_TOKENS = 1200
 
 SYSTEM_PROMPT = (
@@ -99,7 +97,7 @@ if "last_question" not in st.session_state:
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "system", "content": SYSTEM_PROMPT}]
 
-# Display history (skip system)
+
 for msg in st.session_state.messages:
     if msg["role"] == "system":
         continue
@@ -116,7 +114,7 @@ if prompt:
 
     intent = yes_no_intent(prompt)
 
-    # Decide what we want the model to do (or bypass model)
+    # Decide what we want the model to do 
     if st.session_state.awaiting_more_info and intent == "no":
         bot_text = "Okay—what can I help you with?"
         with st.chat_message("assistant"):
@@ -146,7 +144,7 @@ if prompt:
         tokens_sent = count_tokens(messages_to_send, model_to_use)
         st.sidebar.write(f"Tokens sent this request: {tokens_sent}")
 
-        # Single streaming call (no duplication)
+        # Single streaming call 
         full_response = stream_assistant_reply(
             st.session_state.client,
             model_to_use,
