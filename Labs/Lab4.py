@@ -3,6 +3,64 @@ from openai import OpenAI
 import tiktoken
 import chromadb
 from chromadb.utils import embedding_functions
+from pathlib import path 
+import fitz  # PyMuPDF
+
+### using chroma db with openai embeddings
+if 'openai_client' not in st.session_state:
+    st.session_state.openai_client = OpenAI(api_key=st.secrets.OPEN_API_KEY)
+
+# A function that will add documents to collectiin
+# Collection = collection, already established
+# text = extracted text from PDF files
+# Embeddings inserted into the collection from OpenAI
+def add_to_collection(collection, text, file_name):
+    
+    # create an embedding function
+    client = st.session_state.openai_client
+    response = client.embeddings.create(
+        input=[text], model="text-embedding-3-small"
+    )
+
+    #get the embedding
+    embedding = response.data[0].embedding
+
+
+    #add embedding and document to ChromaDB
+    collection.add(
+        documents=[text],
+        ids=[file_name],
+        embeddings=[embedding],
+    )
+
+# EXTRACT TEXT FROM PDF ####
+# This function extracts text from each syllabus to pass to add_to_collection
+def extract_text_from_pdf(pdf_path):
+    doc = fitz.open(pdf_path)
+    text = ""
+    for page in doc:
+        text += page.get_text()
+    doc.close()
+    return text
+
+### POPULATE COLLECTION WITH PDFS ####
+# this function uses extract_text_from_pdf and add_to_collection to put syllabi in the ChromaDB collection 
+def load_pdfs_to_collection(folder_path, collection):
+    pdf_files = path.glob(folder_path + "/*.pdf")
+    for pdf_file in pdf_files:
+        text = extract_text_from_pdf(pdf_file)
+        add_to_collection(collection, text, pdf_file.name)
+
+#check if collection is empty and load pdfs
+if collection.count() == 0:
+    loaded = load_pdfs_to_collection('.Lab-04-Data/', collection)
+    if loaded:
+        st.write("PDFs loaded into ChromaDB collection.")
+    else:
+        st.write("No PDFs found to load.")  
+
+
+
 
 
 def count_tokens(messages, model_name):
