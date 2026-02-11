@@ -3,7 +3,7 @@ from openai import OpenAI
 import tiktoken
 import chromadb
 from chromadb.utils import embedding_functions
-from pathlib import path 
+from pathlib import Path
 import fitz  # PyMuPDF
 
 ### using chroma db with openai embeddings
