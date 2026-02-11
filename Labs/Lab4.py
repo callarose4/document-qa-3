@@ -75,7 +75,11 @@ if collection.count() == 0:
     else:
         st.write("No PDFs found to load.")  
 
+test_query = "Generative AI"
+results = collection.query(query_texts=[test_query], n_results=3)
 
+top_files = results["ids"][0] if results and "ids" in results else []
+st.write("Top 3 matching documents:", top_files)
 
 def count_tokens(messages, model_name):
     try:
