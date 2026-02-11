@@ -14,6 +14,11 @@ if 'openai_client' not in st.session_state:
 #client created
 client = chromadb.Client()
 
+openai_ef = embedding_functions.OpenAIEmbeddingFunction(
+    api_key=st.secrets["OPEN_API_KEY"],
+    model_name="text-embedding-3-small"
+)
+
 # create or get collection
 collection = client.get_or_create_collection(name="lab4_collection", embedding_function=openai_ef)
 # A function that will add documents to collectiin
