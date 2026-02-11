@@ -14,8 +14,10 @@ DATA_DIR = BASE_DIR / "Lab-04-Data"
 if 'openai_client' not in st.session_state:
     st.session_state.openai_client = OpenAI(api_key=st.secrets["OPEN_API_KEY"])
 
+# --- ChromaDB (LOCAL) setup ---
 if "Lab4_VectorDB" not in st.session_state:
-    chroma_client = chromadb.Client()
+    # Local persistent DB folder inside Labs/
+    chroma_client = chromadb.PersistentClient(path=str(BASE_DIR / "chroma_db"))
 
     openai_ef = embedding_functions.OpenAIEmbeddingFunction(
         api_key=st.secrets["OPEN_API_KEY"],
@@ -26,6 +28,8 @@ if "Lab4_VectorDB" not in st.session_state:
         name="Lab4Collection",
         embedding_function=openai_ef
     )
+
+collection = st.session_state.Lab4_VectorDB
 
 collection = st.session_state.Lab4_VectorDB
 # A function that will add documents to collectiin
