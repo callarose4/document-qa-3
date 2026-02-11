@@ -140,7 +140,7 @@ def stream_assistant_reply(client, model_to_use, messages_to_send):
     return full_response
 
 
-st.title("MY Lab 3 question answering chatbot")
+st.title("Lab 4 App: PDF Q&A with ChromaDB and OpenAI")
 
 openAI_model = st.sidebar.selectbox("Which Model?", ["mini", "regular"])
 model_to_use = "gpt-4o-mini" if openAI_model == "mini" else "gpt-4o"
