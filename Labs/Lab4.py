@@ -57,10 +57,12 @@ def extract_text_from_pdf(pdf_path):
 ### POPULATE COLLECTION WITH PDFS ####
 # this function uses extract_text_from_pdf and add_to_collection to put syllabi in the ChromaDB collection 
 def load_pdfs_to_collection(folder_path, collection):
-    pdf_files = path.glob(folder_path + "/*.pdf")
+    pdf_files = Path(folder_path).glob("*.pdf")
     for pdf_file in pdf_files:
         text = extract_text_from_pdf(pdf_file)
         add_to_collection(collection, text, pdf_file.name)
+
+
 
 #check if collection is empty and load pdfs
 if collection.count() == 0:
