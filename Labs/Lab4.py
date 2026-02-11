@@ -6,6 +6,9 @@ from chromadb.utils import embedding_functions
 from pathlib import Path
 import fitz  # PyMuPDF
 
+BASE_DIR = Path(__file__).resolve().parent
+DATA_DIR = BASE_DIR / "Lab-04-Data"
+
 
 ### using chroma db with openai embeddings
 if 'openai_client' not in st.session_state:
@@ -56,17 +59,20 @@ def extract_text_from_pdf(pdf_path):
 
 ### POPULATE COLLECTION WITH PDFS ####
 # this function uses extract_text_from_pdf and add_to_collection to put syllabi in the ChromaDB collection 
-def load_pdfs_to_collection(folder_path, collection):
-    pdf_files = Path(folder_path).glob("*.pdf")
+def load_pdfs_to_collection(folder_path: Path, collection):
+    pdf_files = list(folder_path.glob("*.pdf"))
+    if not pdf_files: 
+        return False  # No PDFs found
     for pdf_file in pdf_files:
         text = extract_text_from_pdf(pdf_file)
         add_to_collection(collection, text, pdf_file.name)
+    return True
 
 
 
 #check if collection is empty and load pdfs
 if collection.count() == 0:
-    loaded = load_pdfs_to_collection('.Lab-04-Data/', collection)
+    loaded = load_pdfs_to_collection(DATA_DIR, collection)
     if loaded:
         st.write("PDFs loaded into ChromaDB collection.")
     else:
