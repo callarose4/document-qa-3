@@ -9,7 +9,15 @@ import fitz  # PyMuPDF
 BASE_DIR = Path(__file__).resolve().parent        
 DATA_DIR = BASE_DIR / "Lab-04-Data"        
 
+def get_rag_context(collection, query: str, k: int =3):
+    "Return (context_text, sources_list) from Chrome for a user query."
+    results = collection.query(query_texts=[query], n_results=k)
+    docs = results['documents'][0] if results.get("documents") else []
+    ids = results ['ids'][0] if results.get("ids") else []
 
+    context_text = "\n\n".join(docs)
+    return context_text, ids
+        
 ### using chroma db with openai embeddings
 if 'openai_client' not in st.session_state:
     st.session_state.openai_client = OpenAI(api_key=st.secrets["OPEN_API_KEY"])
@@ -78,8 +86,6 @@ if collection.count() == 0:
 test_query = "Generative AI"
 results = collection.query(query_texts=[test_query], n_results=3)
 
-top_files = results["ids"][0] if results and "ids" in results else []
-st.write("Top 3 matching documents:", top_files)
 
 def count_tokens(messages, model_name):
     try:
@@ -216,9 +222,24 @@ if prompt:
             st.session_state.last_question = prompt
             st.session_state.awaiting_more_info = True
 
-        # Build messages to send (Part B)
-        messages_to_send = last_two_user_turns(st.session_state.messages)
-        messages_to_send = enforce_max_tokens(messages_to_send, model_to_use, MAX_TOKENS)
+        #RAG: fetch relevant syllabus text from Chroma 
+        context_text, sources = get_rag_context(collection, prompt, k=3)
+
+        rag_instruction = {
+            "role": "system",
+            "content": (
+                "You are a course information chatbot. Use the context to answer the user's question.\n"
+                "Start your answer with: 'Based on the following syllabi:', if you use the context.\n\n"
+                "If the answer is not in the context, say: 'I could not find that information in the provided syllabi.'\n\n"
+                "Keep it simple and clear.\n\n"
+                f"Context: {context_text}\n\n"
+                f"Sources (filenames): {sources}"
+            )
+        }
+
+        # Build messages to send 
+        messages_to_send = st.session_state.messages + [rag_instruction] + last_two_user_turns(st.session_state.messages)
+        messages_to_send = enforce_max_tokens(messages_to_send, model_to_use, MAX_TOKENS)   
 
         tokens_sent = count_tokens(messages_to_send, model_to_use)
         st.sidebar.write(f"Tokens sent this request: {tokens_sent}")
