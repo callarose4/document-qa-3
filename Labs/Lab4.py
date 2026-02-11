@@ -6,45 +6,37 @@ from chromadb.utils import embedding_functions
 from pathlib import Path
 import fitz  # PyMuPDF
 
-BASE_DIR = Path(__file__).resolve().parent
-DATA_DIR = BASE_DIR / "Lab-04-Data"
+BASE_DIR = Path(__file__).resolve().parent        
+DATA_DIR = BASE_DIR.parent / "Lab-04-Data"        
 
 
 ### using chroma db with openai embeddings
 if 'openai_client' not in st.session_state:
     st.session_state.openai_client = OpenAI(api_key=st.secrets["OPEN_API_KEY"])
 
-#client created
-client = chromadb.Client()
+if "Lab4_VectorDB" not in st.session_state:
+    chroma_client = chromadb.Client()
 
-openai_ef = embedding_functions.OpenAIEmbeddingFunction(
-    api_key=st.secrets["OPEN_API_KEY"],
-    model_name="text-embedding-3-small"
-)
+    openai_ef = embedding_functions.OpenAIEmbeddingFunction(
+        api_key=st.secrets["OPEN_API_KEY"],
+        model_name="text-embedding-3-small"
+    )
 
-# create or get collection
-collection = client.get_or_create_collection(name="lab4_collection", embedding_function=openai_ef)
+    st.session_state.Lab4_VectorDB = chroma_client.get_or_create_collection(
+        name="Lab4Collection",
+        embedding_function=openai_ef
+    )
+
+collection = st.session_state.Lab4_VectorDB
 # A function that will add documents to collectiin
 # Collection = collection, already established
 # text = extracted text from PDF files
 # Embeddings inserted into the collection from OpenAI
 def add_to_collection(collection, text, file_name):
-    
-    # create an embedding function
-    client = st.session_state.openai_client
-    response = client.embeddings.create(
-        input=[text], model="text-embedding-3-small"
-    )
-
-    #get the embedding
-    embedding = response.data[0].embedding
-
-
-    #add embedding and document to ChromaDB
     collection.add(
         documents=[text],
         ids=[file_name],
-        embeddings=[embedding],
+        metadatas=[{"source": file_name}]
     )
 
 # EXTRACT TEXT FROM PDF ####
@@ -68,7 +60,8 @@ def load_pdfs_to_collection(folder_path: Path, collection):
         add_to_collection(collection, text, pdf_file.name)
     return True
 
-
+st.write("Looking in:", DATA_DIR)
+st.write("PDFs:", [p.name for p in DATA_DIR.glob("*.pdf")])
 
 #check if collection is empty and load pdfs
 if collection.count() == 0:
