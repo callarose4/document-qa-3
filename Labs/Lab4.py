@@ -160,6 +160,12 @@ model_to_use = "gpt-4o-mini" if openAI_model == "mini" else "gpt-4o"
 
 # keep max_tokens defined in the app 
 MAX_TOKENS = 1200
+SYSTEM_PROMPT = (
+    "Explain answers so a 10-year-old can understand (simple words, short sentences).\n"
+    "After answering, ask exactly: Do you want more info?\n"
+    "If the user says Yes, give more info about the last question and ask again.\n"
+    "If the user says No, respond exactly: Okay—what can I help you with?\n"
+)
 
 
 # Client
