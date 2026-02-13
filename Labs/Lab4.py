@@ -89,43 +89,46 @@ def load_pdfs_to_collection(folder_path: Path, collection) -> bool:
 def get_rag_context(collection, query: str, k: int = 6):
     course = extract_course_code(query)
 
-    # Try querying with metadatas included (different Chroma versions differ).
+    # Try querying with metadatas included (your Chroma does NOT allow "ids" in include)
     try:
         results = collection.query(
             query_texts=[query],
             n_results=k * 3,  # grab more, then filter down
-            include=["documents", "metadatas", "ids"],
+            include=["documents", "metadatas"],
         )
         docs = results.get("documents", [[]])[0]
         metas = results.get("metadatas", [[]])[0]
-        ids = results.get("ids", [[]])[0]
     except TypeError:
         # Fallback for older Chroma versions that don't support include=
         results = collection.query(query_texts=[query], n_results=k * 3)
         docs = results.get("documents", [[]])[0]
-        ids = results.get("ids", [[]])[0]
         metas = [{} for _ in docs]  # no metadatas available
 
     # If they asked about a specific course, keep only chunks from that syllabus filename
     if course:
-        filtered = []
-        for d, m, i in zip(docs, metas, ids):
+        filtered_docs = []
+        filtered_sources = set()
+
+        for d, m in zip(docs, metas):
             src = (m or {}).get("source", "")
             if course.lower() in src.lower():
-                filtered.append((d, src, i))
-        if filtered:
-            docs = [x[0] for x in filtered]
-            sources = sorted({x[1] for x in filtered})
-        else:
-            # If filter finds nothing, fall back to unfiltered
-            sources = sorted({((m or {}).get("source", "") or i.split("::chunk")[0]) for m, i in zip(metas, ids)})
-    else:
-        sources = sorted({((m or {}).get("source", "") or i.split("::chunk")[0]) for m, i in zip(metas, ids)})
+                filtered_docs.append(d)
+                if src:
+                    filtered_sources.add(src)
 
-    # Keep top-k docs after filtering/fallback
+        # If filtering found something, use it; otherwise fall back to unfiltered
+        if filtered_docs:
+            docs = filtered_docs
+            sources = sorted(filtered_sources)
+        else:
+            sources = sorted({(m or {}).get("source", "") for m in metas if (m or {}).get("source")})
+    else:
+        sources = sorted({(m or {}).get("source", "") for m in metas if (m or {}).get("source")})
+
+    # Keep top-k
     docs = docs[:k]
-    context_text = "\n\n---\n\n".join(docs) if docs else ""
     sources = sources[:5]
+    context_text = "\n\n---\n\n".join(docs) if docs else ""
 
     return context_text, sources
 
