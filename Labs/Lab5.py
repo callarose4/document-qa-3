@@ -39,3 +39,23 @@ def get_current_weather(location, api_key, units="imperial"):
         "humidity": round(humidity, 2),
         "description": description
     }
+
+api_key = st.secrets["WEATHER_API"]  
+
+location = st.text_input ("Enter a location (City, State, Country)to get the current weather and clothing recommendation:")
+value = "Syracuse, NY, US"
+
+
+if st.button ("Get Weather and Clothing Recommendation"):
+    try:
+        weather = get_current_weather(location, api_key)
+        st.write(f"Current weather in {weather['location']}: {weather['description']}, {weather['temperature']}°F (feels like {weather['feels_like']}°F)")
+        
+        if weather["feels_like"] < 50:
+            st.write("It's quite cold! Wear a heavy coat, scarf, and gloves.")
+        elif 50 <= weather["feels_like"] < 70:
+            st.write("It's a bit chilly. Consider wearing a light jacket or sweater.")
+        else:
+            st.write("The weather is warm! A t-shirt and shorts should be fine.")
+    except Exception as e:
+        st.error(str(e))
