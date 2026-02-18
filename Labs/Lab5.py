@@ -49,7 +49,7 @@ client = OpenAI(api_key=st.secrets["OPEN_API_KEY"])  # for later use in the lab
 location = st.text_input ("Enter a location (City, State, Country)to get the current weather and clothing recommendation:")
 value = "Syracuse, NY, US"
 
-tools [
+tools=[
     {
         "type": "function",
         "function": {
