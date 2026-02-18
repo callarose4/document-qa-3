@@ -114,7 +114,10 @@ if st.button ("Get Outfit and Activity Recommendation"):
             if tool_call.function.name == "get_current_weather":
                 arguments = json.loads(tool_call.function.arguments or "{}")
 
-                tool_location = arguments.get("location") or "Syracuse, NY, US"
+                tool_location = arguments.get("location") or location or "Syracuse, NY, US"
+                if tool_location.count(",") == 1:  # e.g. "Syracuse, NY"
+                    tool_location = tool_location + ", US"
+
 
                 weather_data = get_current_weather(tool_location, api_key)
 
