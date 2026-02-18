@@ -116,10 +116,9 @@ if st.button ("Get Outfit and Activity Recommendation"):
 
                 tool_location = arguments.get("location") or location or "Syracuse, NY, US"
                 if tool_location.count(",") == 1:
-                     parts = [p.strip() for p in tool_location.split(",")]
-    # Only append US if second part looks like a US state code (2 letters)
-                if len(parts) == 2 and len(parts[1]) == 2 and parts[1].isalpha():
-                 tool_location = tool_location + ", US"
+                    parts = [p.strip() for p in tool_location.split(",")]
+                    if len(parts) == 2 and len(parts[1]) == 2 and parts[1].isalpha():
+                        tool_location = tool_location + ", US"
 
                 weather_data = get_current_weather(tool_location, api_key)
 
