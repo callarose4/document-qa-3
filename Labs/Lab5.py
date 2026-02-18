@@ -1,6 +1,9 @@
 import streamlit as st
 import requests
 
+st.title("Lab 5")
+st.write("The "What to Wear" Bot")
+
 def get_current_weather(location, api_key, units = "imperial"):
     url = ( 
         f'http://api.openweathermap.org/data/2.5/weather'
