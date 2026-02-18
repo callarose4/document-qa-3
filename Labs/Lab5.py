@@ -71,6 +71,12 @@ tools=[
     }
 ]
 
+def normalize_location(loc: str) -> str:
+    loc = (loc or "").strip()
+    # OpenWeather expects country codes like "US" not "USA"
+    loc = loc.replace(", USA", ", US").replace(" USA", " US")
+    return loc
+
 if st.button ("Get Outfit and Activity Recommendation"):
     try:
         messages = [
