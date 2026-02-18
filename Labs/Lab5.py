@@ -41,12 +41,13 @@ def get_current_weather(location, api_key, units="imperial"):
     }
 
 api_key = st.secrets["WEATHER_API"]  
+client = OpenAI(api_key=st.secrets["OPEN_API_KEY"])  # for later use in the lab
 
 location = st.text_input ("Enter a location (City, State, Country)to get the current weather and clothing recommendation:")
 value = "Syracuse, NY, US"
 
 
-if st.button ("Get Weather and Clothing Recommendation"):
+if st.button ("Get Outfit and Activity Recommendation"):
     try:
         weather = get_current_weather(location, api_key)
         st.write(f"Current weather in {weather['location']}: {weather['description']}, {weather['temperature']}°F (feels like {weather['feels_like']}°F)")
