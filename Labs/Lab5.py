@@ -8,19 +8,22 @@ st.title("Lab 5")
 st.write('The "What to Wear" Bot')
 
 def get_current_weather(location, api_key, units="imperial"):
-    url = (
-        "https://api.openweathermap.org/data/2.5/weather"
-        f"?q={location}&appid={api_key}&units={units}"
-    )
+    # sanitize input (fixes: "USA" vs "US", trailing punctuation, extra spaces)
+    location = (location or "").strip()
+    location = location.replace(", USA", ", US").replace(" USA", " US")
+    location = location.rstrip(" .,!;:")
 
-    response = requests.get(url)
+    base_url = "https://api.openweathermap.org/data/2.5/weather"
+    params = {"q": location, "appid": api_key, "units": units}
+
+    response = requests.get(base_url, params=params)
 
     if response.status_code == 401:
         raise Exception("Invalid API key (401 Unauthorized). Please check and try again.")
 
     if response.status_code == 404:
-        error_message = response.json().get("message")
-        raise Exception(f"404 error: {error_message}")
+        # show EXACT query that was sent (super helpful for debugging)
+        raise Exception(f"404 error: city not found (q='{location}')")
 
     data = response.json()
 
@@ -29,8 +32,6 @@ def get_current_weather(location, api_key, units="imperial"):
     temp_min = data["main"]["temp_min"]
     temp_max = data["main"]["temp_max"]
     humidity = data["main"]["humidity"]
-
-    # EXTRA “relevant data” from the lab instructions:
     description = data["weather"][0]["description"]
 
     return {
@@ -42,6 +43,7 @@ def get_current_weather(location, api_key, units="imperial"):
         "humidity": round(humidity, 2),
         "description": description
     }
+
 
 api_key = st.secrets["WEATHER_API"]  
 client = OpenAI(api_key=st.secrets["OPEN_API_KEY"])  # for later use in the lab
